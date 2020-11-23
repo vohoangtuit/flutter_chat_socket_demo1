@@ -22,10 +22,13 @@ class ChatModel extends Model {
   List<User> friendList = List<User>();
   List<Message> messages = List<Message>();
   SocketIO socketIO;
-  ValueChanged valueChanged;
+  bool typing;
+  // ChatModel( {ValueChanged typing}){
+  //   this.typing =typing;
+  // }
   void init() {
-    //currentUser=users[0];// user 1
-    currentUser=users[1]; //user 2
+    currentUser=users[0];// user 1
+    //currentUser=users[1]; //user 2
     friendList = users.where((user) => user.chatID != currentUser.chatID).toList();
 
     socketIO = SocketIOManager().createSocketIO(
@@ -35,6 +38,7 @@ class ChatModel extends Model {
 
     socketIO.subscribe('receive_message', (jsonData) {// todo: receive message form server socket
       Map<String, dynamic> data = json.decode(jsonData);
+      print("receive_message ----- "+data['content']);
       messages.add(Message(
           data['content'], data['senderChatID'], data['receiverChatID']));
       notifyListeners();
@@ -42,29 +46,27 @@ class ChatModel extends Model {
 
     socketIO.subscribe('typing', (jsonData) {// todo: receive message form server socket
       Map<String, dynamic> data = json.decode(jsonData);
-     // messages.add(Message(null, data['senderChatID'], data['receiverChatID']));
-      valueChanged(true);
+      print("typing ----- "+data.toString());
+      typing =true;
       notifyListeners();
+
     });
     socketIO.subscribe('stop_typing', (jsonData) {// todo: receive message form server socket
       Map<String, dynamic> data = json.decode(jsonData);
-      valueChanged(false);
-      //messages.add(Message(null, data['senderChatID'], data['receiverChatID']));
+      print("stop_typing ----- "+data.toString());
+      typing =false;
       notifyListeners();
     });
 
     socketIO.connect();
   }
-  void handleTyping(bool typing,User user){
-    if(socketIO==null){
-      print("handleTyping socketIO==null ");
-      return;
-    }
+  void handleTyping(bool typing,User user,User friend){
     if(typing){// todo send message to server socket
       socketIO.sendMessage(
         'typing',
         json.encode({
           'senderChatID': user.chatID,
+          'receiverChatID': friend.chatID,
         }),
       );
     }else{
@@ -72,6 +74,7 @@ class ChatModel extends Model {
         'stop_typing',
         json.encode({
           'senderChatID': user.chatID,
+          'receiverChatID': friend.chatID,
         }),
       );
     }

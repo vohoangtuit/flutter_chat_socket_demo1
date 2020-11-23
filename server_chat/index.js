@@ -35,7 +35,7 @@ io.on('connection', socket => {
         receiverChatID = message.receiverChatID
         senderChatID = message.senderChatID
        
-		console.log(senderChatID +'typing ');
+		console.log('typing '+message.senderChatID+ 'receiverChatID '+message.receiverChatID);
 
         //Send message to only that particular room
         socket.in(receiverChatID).emit('typing', {
@@ -45,7 +45,7 @@ io.on('connection', socket => {
     })
 	socket.on('stop_typing',message=> {
 		//Send message to only that particular room
-		console.log(senderChatID +'stop_typing ');
+		console.log('stop_typing '+message.senderChatID );
         socket.in(receiverChatID).emit('stop_typing', {
             'senderChatID': senderChatID,
             'receiverChatID':receiverChatID,
